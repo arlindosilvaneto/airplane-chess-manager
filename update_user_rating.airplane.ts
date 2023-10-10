@@ -30,20 +30,22 @@ export default airplane.task(
   async ({ user_id, rating, meta }) => {
     let response: object;
 
-    const {output: user} = await airplane.mongodb.findOne("db", "users", {
+    const { output: user } = await airplane.mongodb.findOne("db", "users", {
       filter: { id: user_id }
     });
 
     if (!user?._id) {
-      user.id = user_id;
-      user.rating = [{
-        rating,
-        timestamp: new Date().getTime()
-      }];
-      user.meta = meta;
+      const newUser = {
+        id: user_id,
+        rating: [{
+          rating,
+          timestamp: new Date().getTime()
+        }],
+        meta
+      };
 
       response = await airplane.mongodb.insertOne(
-        "db", "users", user
+        "db", "users", newUser
       );
     } else {
       user.rating.push({
@@ -60,7 +62,7 @@ export default airplane.task(
         filter: { id: user_id }
       });
     }
-    
+
     return response
   }
 );
