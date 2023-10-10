@@ -162,7 +162,7 @@ const EloRatingSystem = () => {
         <Stack>
           <Switch id={drawSwitchId} label="Draw" onLabel="Yes" offLabel="No" size="lg" />
           {!draw && <Switch id={switchId} label={checked ? `${selectedRows[0]?.id} Won` : `${selectedRows[1]?.id} Won`}
-            onLabel={selectedRows[0]?.id} offLabel={selectedRows[1]?.id} size="lg" />}          
+            onLabel={selectedRows[0]?.id} offLabel={selectedRows[1]?.id} size="lg" />}
           <TextInput id={kId} label="K Factor" type="number" defaultValue="20" />
           <Label color="green">Rating Changes</Label>
           <Table columns={[{
@@ -171,7 +171,7 @@ const EloRatingSystem = () => {
           }, {
             label: "Rating",
             accessor: "rating"
-          },{
+          }, {
             label: "Novo Rating",
             accessor: "newRating"
           }]} data={[{
