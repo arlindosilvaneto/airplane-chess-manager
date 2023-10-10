@@ -18,6 +18,12 @@ export default airplane.task(
         type: "integer",
         default: 800
       },
+      score: {
+        name: "User Score",
+        description: "User's score (1 - win, 0 - lose, 0.5 - draw)",
+        type: "float",
+        required: false
+      },
       meta: {
         name: "User Update Meta",
         type: "shorttext",
@@ -27,7 +33,7 @@ export default airplane.task(
   },
   // This is your task's entrypoint. When your task is executed, this
   // function will be called.
-  async ({ user_id, rating, meta }) => {
+  async ({ user_id, rating, score, meta }) => {
     let response: object;
 
     const { output: user } = await airplane.mongodb.findOne("db", "users", {
@@ -39,6 +45,7 @@ export default airplane.task(
         id: user_id,
         rating: [{
           rating,
+          score,
           timestamp: new Date().getTime()
         }],
         meta
@@ -50,6 +57,7 @@ export default airplane.task(
     } else {
       user.rating.push({
         rating,
+        score,
         timestamp: new Date().getTime()
       });
       user.meta = JSON.stringify({
@@ -58,7 +66,7 @@ export default airplane.task(
       });
 
       response = await airplane.mongodb.updateOne(
-        "db", "users", { $set: { rating: user.rating, meta: user.meta } }, {
+        "db", "users", { $set: { rating: user.rating, score: user.score, meta: user.meta } }, {
         filter: { id: user_id }
       });
     }

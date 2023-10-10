@@ -18,6 +18,8 @@ export function updateElo({ playerRating, opponentRating, score, kFactor }) {
 
   return {
     playerRating: parseInt(playerNewRating),
-    opponentRating: parseInt(opponentNewRating)
+    playerScore: score,
+    opponentRating: parseInt(opponentNewRating),
+    opponentScore: score === 1 ? 0 : (score === 0 ? 1 : 0.5)
   };
 }
