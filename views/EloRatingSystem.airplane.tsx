@@ -6,7 +6,7 @@ import airplane from "airplane";
 import {PlusIconSolid, ChartBarIconOutline, ArrowUpOnSquareStackIconOutline} from '@airplane/views/icons';
 import { SetStateAction, useEffect, useState, useCallback } from "react";
 import {updateElo} from './calculateRatingUpdate';
-import {parsePlayerData} from '../utils'
+import {parsePlayerData, convertToCSV} from '../utils'
 
 type Updates = {playerRating: number, playerScore: number, opponentRating: number, opponentScore: number}
 type Player = {id: string, rating: any[], _id: string, meta: any, progress: any[]}
@@ -27,6 +27,7 @@ const EloRatingSystem = () => {
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [createLoading, setCreatingLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [userData, setUserData] = useState([] as SetStateAction<any | Player[]>);
   const [playerProgress, setPlayerProgress] = useState({} as Player);
 
@@ -131,6 +132,34 @@ const EloRatingSystem = () => {
     await getUserData();
   }
 
+  const publishRatings = async () => {
+    setUploading(true);
+
+    try {
+      const filePayload = convertToCSV(
+        userData
+          .map(user => ({
+            id: user.id,
+            rating: user.rating,
+            lastScore: user.lastScore,
+            lastScoreDate: user.lastScoreDate,
+            progress: user.progress.map(progress => progress.rating).join('-')
+          }))
+        );
+
+      const upload = await airplane.file.upload(filePayload, 'elo_ratings.csv');
+
+      navigator.clipboard.writeText(upload.url);
+
+      showNotification({ message: 'Ratings file URL published to clipboard!', type: 'success' });
+    } catch(e) {
+      console.log(e);
+      showNotification({ message: 'Something went wrong during ratings file upload!', type: 'error' });
+    }
+
+    setUploading(false);
+  }
+
   return (
     <>
       <Stack spacing="lg">
@@ -149,6 +178,9 @@ const EloRatingSystem = () => {
             rowActions={rowActions} rowSelection="checkbox" />
           }
         </Stack>
+        {!dataLoading && <Stack direction="row">
+          <Button rightIcon={<ArrowUpOnSquareStackIconOutline />} onClick={publishRatings} loading={uploading}>Publish Ratings</Button>
+        </Stack>}
       </Stack>
 
       <Dialog id={modalId} title="Players Game Manager" onClose={onModalClose}>
