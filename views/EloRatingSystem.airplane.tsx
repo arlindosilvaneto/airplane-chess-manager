@@ -3,16 +3,17 @@ import {
   Switch, Label, showNotification, Form, TextInput, Chart, Loader
 } from "@airplane/views";
 import airplane from "airplane";
-import {PlusIconSolid, ChartBarIconOutline} from '@airplane/views/icons';
+import {PlusIconSolid, ChartBarIconOutline, ArrowUpOnSquareStackIconOutline} from '@airplane/views/icons';
 import { SetStateAction, useEffect, useState, useCallback } from "react";
 import {updateElo} from './calculateRatingUpdate';
-
-const DEFAULT_K_FACTOR = 20;
+import {parsePlayerData} from '../utils'
 
 type Updates = {playerRating: number, playerScore: number, opponentRating: number, opponentScore: number}
 type Player = {id: string, rating: any[], _id: string, meta: any, progress: any[]}
 
 const EloRatingSystem = () => {
+  const {DEFAULT_K_FACTOR = 40, INITIAL_RATING = 800} = process.env;
+  
   const { id: tableId, selectedRows, clearSelection } = useComponentState('players-table');
   const { id: modalId, open, close } = useComponentState('game-modal');
   const { id: createModalId, open: createOpen, close: createClose } = useComponentState('user-modal');
@@ -57,14 +58,6 @@ const EloRatingSystem = () => {
     close();
   }
 
-  const lastRating = (data: Player[]) => {
-    return data.map((player) => ({
-      ...player,
-      progress: player.rating.map((rating, index) => ({timestamp: index + 1, rating: rating.rating})),
-      rating: player.rating[player.rating.length - 1].rating
-    }));
-  }
-
   const openChart = (row: Player) => {
     setPlayerProgress(row);
     progressOpen();
@@ -81,7 +74,7 @@ const EloRatingSystem = () => {
     setDataLoading(true);
     const players = (await airplane.execute<Player[]>('get_all_users', {})).output;
 
-    setUserData(lastRating(players));
+    setUserData(parsePlayerData(players));
     } catch(e) {
       console.log(e);
       showNotification({ message: 'Something went wrong during players fetch!', type: 'error' });
@@ -189,8 +182,8 @@ const EloRatingSystem = () => {
 
       <Dialog id={createModalId} title="Create Player" onClose={createClose}>
         <Form onSubmit={createNewUser} submitting={createLoading}>
-          <TextInput id={userNameId} label="New player name" />
-          <TextInput id={userRatingId} label="New player rating" type="number" />
+          <TextInput id={userNameId} label="New player name" value={userName} />
+          <TextInput id={userRatingId} label="New player rating" type="number" value={INITIAL_RATING.toString()} />
         </Form>
       </Dialog>
 
@@ -212,6 +205,14 @@ export default airplane.view(
   {
     slug: "elo_rating_system",
     name: "ELO Rating System",
+    envVars: {
+      DEFAULT_K_FACTOR: {
+        config: "DEFAULT_K_FACTOR"
+      },
+      INITIAL_RATING: {
+        config: "INITIAL_RATING"
+      }
+    }
   },
   EloRatingSystem
 );
